@@ -40,9 +40,9 @@ void PointLight::shade(Ray3D& ray, int mode) {
   const int y=1;
   const int z=2;
 
-  Vector3D light_direction( this->pos[x] - ray.intersection.point[x],
-	                        this->pos[y] - ray.intersection.point[y],
-						     this->pos[z] - ray.intersection.point[z]); // light source location to intersection point: intersection_point - light_pos
+  Vector3D light_direction(this->pos[x] - ray.intersection.point[x],
+	                         this->pos[y] - ray.intersection.point[y],
+						               this->pos[z] - ray.intersection.point[z]); // light source location to intersection point: intersection_point - light_pos
   light_direction.normalize();
 
   // Diffuse

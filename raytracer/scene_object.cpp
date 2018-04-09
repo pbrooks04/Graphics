@@ -23,17 +23,12 @@ bool UnitSquare::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 	// HINT: Remember to first transform the ray into object space  
 	// to simplify the intersection test.
 
-	if (!ray.intersection.none && ray.intersection.t_value > 0){
-		return false;
-	}
-
-
-	// So I guess right now it's in world space...
+  //So I guess right now it's in world space...
 
 	Ray3D objectSpaceRay;
 	objectSpaceRay.origin = worldToModel * ray.origin;
 	objectSpaceRay.dir = worldToModel * ray.dir;
-    objectSpaceRay.dir.normalize();
+  objectSpaceRay.dir.normalize();
 
 	// If the ray intersects with the sqaure, it must:
 
@@ -62,7 +57,11 @@ bool UnitSquare::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 					// still object (model) space
 					Point3D intersection_point(x_intersection, y_intersection, 0.0);
 
-					
+          //Check if another object was intersected in front of this one
+	        if (!ray.intersection.none && ray.intersection.t_value > t_val){
+            return false;
+          }
+
 					ray.intersection.point = modelToWorld*intersection_point;
 					ray.intersection.t_value = t_val;
 					ray.intersection.normal = transNorm(worldToModel ,Vector3D(0.0, 0.0, 1.0)); // Vector3D: formed from inverse transpose
@@ -110,10 +109,6 @@ bool UnitSphere::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 	// HINT: Remember to first transform the ray into object space  
 	// to simplify the intersection test.
 
-	if (!ray.intersection.none && ray.intersection.t_value > 0){
-		return false;
-	}
-
 	Ray3D objectSpaceRay;
 	objectSpaceRay.origin = worldToModel * ray.origin;
 	objectSpaceRay.dir = worldToModel * ray.dir;
@@ -122,9 +117,6 @@ bool UnitSphere::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 	const int x = 0;
 	const int y = 1;
 	const int z = 2;
-
-  double t_val = -(objectSpaceRay.origin[z] / objectSpaceRay.dir[z]);
-	if (t_val > 0){ // If it is less than zero, the intersection was backwards, therefore the ray is moving away from the unit square
 	
   // If the ray intersects with the sphere, it must:
 
@@ -149,31 +141,34 @@ bool UnitSphere::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 
 		double t_val = std::min(t1, t2); // first hit will have a smaller t value, if they're the same it should just return that
 		// Maybe I should also check that t_val > 0 --- no backward intersection
+    if (t_val > 0){
+		  // I have roots so this is a hit
 
-		// I have roots so this is a hit
-
-		double x_intersection = objectSpaceRay.origin[x] + t_val*objectSpaceRay.dir[x];
-		double y_intersection = objectSpaceRay.origin[y] + t_val*objectSpaceRay.dir[y];
-		double z_intersection = objectSpaceRay.origin[z] + t_val*objectSpaceRay.dir[z];
+		  double x_intersection = objectSpaceRay.origin[x] + t_val*objectSpaceRay.dir[x];
+		  double y_intersection = objectSpaceRay.origin[y] + t_val*objectSpaceRay.dir[y];
+		  double z_intersection = objectSpaceRay.origin[z] + t_val*objectSpaceRay.dir[z];
  
-		Point3D intersection_point(x_intersection, y_intersection, z_intersection);
+		  Point3D intersection_point(x_intersection, y_intersection, z_intersection);
 
-		// I need the normal, which is the vector from the centre of the circle to the intersection point, which I guess is the point normalized...
-		// but that should just be the point because the unit circle has radius 1 
-		Vector3D intersection_normal(x_intersection, y_intersection, z_intersection);
-		intersection_normal.normalize();
+		  // I need the normal, which is the vector from the centre of the circle to the intersection point, which I guess is the point normalized...
+		  // but that should just be the point because the unit circle has radius 1 
+		  Vector3D intersection_normal(x_intersection, y_intersection, z_intersection);
+		  intersection_normal.normalize();
 
-
+      //Check if another object was intersected in front of this one
+	    if (!ray.intersection.none && ray.intersection.t_value < t_val){
+        return false;
+      }
 		
-		ray.intersection.point = modelToWorld*intersection_point;
-		ray.intersection.t_value = t_val;
-		ray.intersection.normal = transNorm(worldToModel , intersection_normal); // Vector3D: formed from inverse transpose
-		ray.intersection.normal.normalize();
-		ray.intersection.none = false;
+		  ray.intersection.point = modelToWorld*intersection_point;
+		  ray.intersection.t_value = t_val;
+		  ray.intersection.normal = transNorm(worldToModel , intersection_normal); // Vector3D: formed from inverse transpose
+		  ray.intersection.normal.normalize();
+		  ray.intersection.none = false;
 
-		return true;
+		  return true;
+    }
 	}
-  }
 	return false;
 }
 
@@ -186,11 +181,6 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 	// HINT: Remember to first transform the ray into object space  
 	// to simplify the intersection test.
 
-
-	if (!ray.intersection.none && ray.intersection.t_value > 0){
-		return false;
-	}
-
 	Ray3D objectSpaceRay;
 	objectSpaceRay.origin = worldToModel * ray.origin;
 	objectSpaceRay.dir = worldToModel * ray.dir;
@@ -202,8 +192,8 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 
 	const double z_max = 0.5;
 	const double z_min = -0.5;
-
-	// Plot inf cylinder
+	
+  // Plot inf cylinder
 	//	Ray is point on x,y unit circle
 
 	double a = objectSpaceRay.dir[x]*objectSpaceRay.dir[x] + objectSpaceRay.dir[y]*objectSpaceRay.dir[y];
@@ -226,6 +216,11 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 			Point3D intersection_point(x_intersection, y_intersection, z_intersection);
 			Vector3D intersection_normal(x_intersection, y_intersection, 0.0);
 			intersection_normal.normalize();
+
+      //Check if another object was intersected in front of this one
+	    if (!ray.intersection.none && ray.intersection.t_value < t_val){
+        return false;
+      }
 
 			ray.intersection.point = modelToWorld*intersection_point;
 			ray.intersection.t_value = t_val;
@@ -265,6 +260,11 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 
 			Point3D intersection_point(x_intersection, y_intersection, z_intersection);
 
+      //Check if another object was intersected in front of this one
+	    if (!ray.intersection.none && ray.intersection.t_value < t_val){
+        return false;
+      }
+
 			ray.intersection.point = modelToWorld*intersection_point;
 			ray.intersection.t_value = t_val;
 			ray.intersection.normal = transNorm(worldToModel , intersection_normal); 
@@ -283,6 +283,11 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 
 			Point3D intersection_point(x_intersection, y_intersection, z_intersection);
 			Vector3D intersection_normal(0, 0, 1);
+
+      //Check if another object was intersected in front of this one
+	    if (!ray.intersection.none && ray.intersection.t_value < t_val){
+        return false;
+      }
 
 			ray.intersection.point = modelToWorld*intersection_point;
 			ray.intersection.t_value = t_val;
@@ -303,6 +308,11 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 			Point3D intersection_point(x_intersection, y_intersection, z_intersection);
 			Vector3D intersection_normal(0, 0, -1);
 
+      //Check if another object was intersected in front of this one
+	    if (!ray.intersection.none && ray.intersection.t_value < t_val){
+        return false;
+      }
+
 			ray.intersection.point = modelToWorld*intersection_point;
 			ray.intersection.t_value = t_val;
 			ray.intersection.normal = transNorm(worldToModel , intersection_normal); 
@@ -312,7 +322,6 @@ bool UnitCylinder::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 			return true;
 		}
 	}
-	
 	return false;
 }
 

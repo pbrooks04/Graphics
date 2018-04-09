@@ -39,15 +39,55 @@ int main(int argc, char* argv[])
 	light_list.push_back(pLight);
 	
 	// Add a unit square into the scene with material mat.
-	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
+	/*
+  SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
 	scene.push_back(sphere);
 	SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
 	scene.push_back(plane);
-
 	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
 	scene.push_back(cylinder);
-
-	// Apply some transformations to the sphere and unit square.
+*/
+/*
+	SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
+	scene.push_back(plane);
+	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
+	scene.push_back(sphere);
+	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
+	scene.push_back(cylinder);
+	*/
+  /*
+  SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
+	scene.push_back(plane);
+	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
+	scene.push_back(cylinder);
+	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
+	scene.push_back(sphere);
+*/
+/*
+	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
+	scene.push_back(cylinder);
+  SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
+	scene.push_back(plane);
+	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
+	scene.push_back(sphere);
+*/
+///*
+	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
+	scene.push_back(cylinder);
+	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
+	scene.push_back(sphere);
+  SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
+	scene.push_back(plane);
+//*/
+/*
+	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
+	scene.push_back(sphere);
+	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
+	scene.push_back(cylinder);
+  SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
+	scene.push_back(plane);
+  */
+  // Apply some transformations to the sphere and unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
 	sphere->translate(Vector3D(0, 0, -5));
 	sphere->rotate('x', -45);
@@ -59,8 +99,8 @@ int main(int argc, char* argv[])
 	plane->rotate('z', 45);
 	plane->scale(Point3D(0, 0, 0), factor2);
 
-	double factor3[3] = { 1.0, 1.0, 1.0 };
-	cylinder->translate(Vector3D(1, 1, -2));
+	double factor3[3] = { 0.8, 0.8, 0.8 };
+	cylinder->translate(Vector3D(-1, 0.2, -2));
 	//cylinder->rotate('z', 45);
 	cylinder->rotate('x', 110);
 	//cylinder->rotate('y', 45);
