@@ -40,9 +40,10 @@ void PointLight::shade(Ray3D& ray, int mode) {
   const int y=1;
   const int z=2;
 
+  //Number of lights per line of area light
   Vector3D light_direction(this->pos[x] - ray.intersection.point[x],
-	                         this->pos[y] - ray.intersection.point[y],
-						               this->pos[z] - ray.intersection.point[z]); // light source location to intersection point: intersection_point - light_pos
+                           this->pos[y] - ray.intersection.point[y],
+                           this->pos[z] - ray.intersection.point[z]); // light source location to intersection point: intersection_point - light_pos
   light_direction.normalize();
 
   // Diffuse
@@ -65,15 +66,18 @@ void PointLight::shade(Ray3D& ray, int mode) {
   // where b is point to camera vector.... so the ray normalized and inverted?
   
   Vector3D b_vector(-ray.dir); 
-								
+                
   b_vector.normalize();
   double specular_value = pow( std::max(0.0, reflection.dot(b_vector)) , ray.intersection.mat->specular_exp ); 
   Color specular_component(specular_value*ray.intersection.mat->specular*this->col_specular);
-  
+
   if(mode == 0){
     ray.col = diffuse_component + ambient_component + specular_component;
   } else if (mode == 1){
     ray.col = ambient_component;
+    //ray.col[0] = 0.0;
+    //ray.col[1] = 1.0;
+    //ray.col[2] = 0.0;
   }
   ray.col.clamp();
 }

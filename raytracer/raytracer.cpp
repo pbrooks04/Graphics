@@ -38,49 +38,66 @@ void Raytracer::computeTransforms(Scene& scene) {
 void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) {
   const double epsilon = 0.01; //used to get rid of noise in hard shadow
 	for (size_t  i = 0; i < light_list.size(); ++i) {
-		LightSource* light = light_list[i];
+   
+    //size of area light. Larger val = larger area light
+    const int light_size = 3;
+    //light definition. Larger val = more definition/smaller space between shadows
+    const double light_def = 3.5;
+    Color avg_shadow;
+    avg_shadow[0] = 0;
+    avg_shadow[1] = 0;
+    avg_shadow[2] = 0;
+
+    #pragma omp parallel for
+    for (int j=0; j<(2*light_size); j++){
+      for (int k=0; k<(2*light_size); k++){
 		
-    //Create Shadow Ray
-    Ray3D shadow_ray;
-    //Origin is at intersection
-    shadow_ray.origin = ray.intersection.point;
-    //Direction is towards light
-    Point3D light_origin(light->get_position());
-    Vector3D light_dir(
-      light_origin[0] - ray.intersection.point[0],
-      light_origin[1] - ray.intersection.point[1],
-      light_origin[2] - ray.intersection.point[2]
-    );
-    shadow_ray.dir = light_dir;
-    shadow_ray.dir.normalize();
-    shadow_ray.origin = ray.intersection.point + (epsilon * shadow_ray.dir);
+        LightSource* light = light_list[i];
+          
+        //Create Shadow Ray
+        Ray3D shadow_ray;
+        //Origin is at intersection
+        shadow_ray.origin = ray.intersection.point;
+        //Direction is towards light
+        Point3D light_origin(light->get_position());
+        Vector3D light_dir(
+          (light_origin[0] - ((light_size - j)/light_def)) - ray.intersection.point[0],
+          (light_origin[1] - ((light_size - k)/light_def)) - ray.intersection.point[1],
+          (light_origin[2]) - ray.intersection.point[2]
+        );
+        shadow_ray.dir = light_dir;
+        shadow_ray.dir.normalize();
+        shadow_ray.origin = ray.intersection.point + (epsilon * shadow_ray.dir);
 
-    bool process_ray = true;
-    
-    //Find shadow intersections
-    traverseScene(scene, shadow_ray);
+        bool process_ray = true;
+        
+        //Find shadow intersections
+        traverseScene(scene, shadow_ray);
 
-    //Checking if ray met another object
-    if(!shadow_ray.intersection.none){
-      double light_distance = (light_origin - shadow_ray.intersection.point).length();
-      double intsc_distance = (shadow_ray.intersection.point - ray.intersection.point).length();
-      //Don't process_ray if it is being blocked by another object
-      //Need to check t_value to see which direction, wrt the light, the other object is in
-      if(intsc_distance < light_distance && shadow_ray.intersection.t_value >= 0){
-        process_ray = false;
-        light->shade(ray, 1);
+        //Checking if ray met another object
+        if(!shadow_ray.intersection.none){
+          double light_distance = (light_origin - shadow_ray.intersection.point).length();
+          double intsc_distance = (shadow_ray.intersection.point - ray.intersection.point).length();
+          //Don't process_ray if it is being blocked by another object
+          //Need to check t_value to see which direction, wrt the light, the other object is in
+          if(intsc_distance < light_distance && shadow_ray.intersection.t_value >= 0){
+            process_ray = false;
+            light->shade(ray, 1);
+          }
+          light->shade(ray, 1);
+        }
+        
+        if(process_ray){
+          //default lighting
+          light->shade(ray, 0);
+        }
+        avg_shadow = avg_shadow + ray.col; 
       }
-      light->shade(ray, 1);
-    }
-    
-    if(process_ray){
-      //default lighting
-      light->shade(ray, 0);
     }
 
-		// Each lightSource provides its own shading function.
-		// Implement shadows here if needed.
-		//light->shade(ray);        
+    ray.col[0] = avg_shadow[0]/pow((light_size*2), 2.0);
+    ray.col[1] = avg_shadow[1]/pow((light_size*2), 2.0);
+    ray.col[2] = avg_shadow[2]/pow((light_size*2), 2.0);
 	}
 }
 
@@ -115,6 +132,7 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 
 
 	// Construct a ray for each pixel.
+  #pragma omp parallel for
 	for (int i = 0; i < image.height; i++) {
 		for (int j = 0; j < image.width; j++) {
 

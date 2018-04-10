@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -pg -g -O2 -Wall
+CFLAGS = -pg -g -O2 -Wall -fopenmp
 LDFLAGS = -pg -g
 LIBS = -lm
 

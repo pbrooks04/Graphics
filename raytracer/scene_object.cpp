@@ -118,57 +118,61 @@ bool UnitSphere::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 	const int y = 1;
 	const int z = 2;
 	
-  // If the ray intersects with the sphere, it must:
+	//double t_val_check = -(objectSpaceRay.origin[z] / objectSpaceRay.dir[z]);
+//	if (t_val_check > 0){ // If it is less than zero, the intersection was backwards, therefore the ray is moving away from the unit square
+  
+    // If the ray intersects with the sphere, it must:
 
-	// 1. be a root of the sphere x^2 + y^2 + z^2 = 1
-	// 2. be the first (closer to ray origin) root
+    // 1. be a root of the sphere x^2 + y^2 + z^2 = 1
+    // 2. be the first (closer to ray origin) root
 
-	// So to be a root, I need to find t in:
-	//			(origin.x + t*dir.x)^2 + (origin.y + t*dir.y)^2 + (origin.z + t*dir.z)^2 = 1
-	//  which is equivalent to:
-	//			t^2 * (dir.x^2 + dir.y^2 + dir.z^2) + t*( 2*(origin.x*dir.x + origin.y*dir.y + origin.z*dir.z) ) + (origin.x^2 + origin.y^2 + origin.z^2 - 1) = 0
-	// then sub into quadratic equation 
+    // So to be a root, I need to find t in:
+    //			(origin.x + t*dir.x)^2 + (origin.y + t*dir.y)^2 + (origin.z + t*dir.z)^2 = 1
+    //  which is equivalent to:
+    //			t^2 * (dir.x^2 + dir.y^2 + dir.z^2) + t*( 2*(origin.x*dir.x + origin.y*dir.y + origin.z*dir.z) ) + (origin.x^2 + origin.y^2 + origin.z^2 - 1) = 0
+    // then sub into quadratic equation 
 
-	double a = objectSpaceRay.dir[x]*objectSpaceRay.dir[x] + objectSpaceRay.dir[y]*objectSpaceRay.dir[y] + objectSpaceRay.dir[z]*objectSpaceRay.dir[z];
-	double b = 2*(objectSpaceRay.origin[x]*objectSpaceRay.dir[x] + objectSpaceRay.origin[y]*objectSpaceRay.dir[y] + objectSpaceRay.origin[z]*objectSpaceRay.dir[z]);
-	double c = objectSpaceRay.origin[x]*objectSpaceRay.origin[x] + objectSpaceRay.origin[y]*objectSpaceRay.origin[y] + objectSpaceRay.origin[z]*objectSpaceRay.origin[z] - 1.0;
+    double a = objectSpaceRay.dir[x]*objectSpaceRay.dir[x] + objectSpaceRay.dir[y]*objectSpaceRay.dir[y] + objectSpaceRay.dir[z]*objectSpaceRay.dir[z];
+    double b = 2*(objectSpaceRay.origin[x]*objectSpaceRay.dir[x] + objectSpaceRay.origin[y]*objectSpaceRay.dir[y] + objectSpaceRay.origin[z]*objectSpaceRay.dir[z]);
+    double c = objectSpaceRay.origin[x]*objectSpaceRay.origin[x] + objectSpaceRay.origin[y]*objectSpaceRay.origin[y] + objectSpaceRay.origin[z]*objectSpaceRay.origin[z] - 1.0;
 
-	double b_squared_minus_4_a_c = b*b - 4*a*c; 
+    double b_squared_minus_4_a_c = b*b - 4*a*c; 
 
-	if (b_squared_minus_4_a_c >= 0 && a != 0){ // check for non negative square root and non zero dividend 
-		double t1 = (-b + sqrt(b_squared_minus_4_a_c)) / 2*a;
-		double t2 = (-b - sqrt(b_squared_minus_4_a_c)) / 2*a;
+    if (b_squared_minus_4_a_c >= 0 && a != 0){ // check for non negative square root and non zero dividend 
+      double t1 = (-b + sqrt(b_squared_minus_4_a_c)) / 2*a;
+      double t2 = (-b - sqrt(b_squared_minus_4_a_c)) / 2*a;
 
-		double t_val = std::min(t1, t2); // first hit will have a smaller t value, if they're the same it should just return that
-		// Maybe I should also check that t_val > 0 --- no backward intersection
-    if (t_val > 0){
-		  // I have roots so this is a hit
+      double t_val = std::min(t1, t2); // first hit will have a smaller t value, if they're the same it should just return that
+      // Maybe I should also check that t_val > 0 --- no backward intersection
+      if (t_val > 0){
+        // I have roots so this is a hit
 
-		  double x_intersection = objectSpaceRay.origin[x] + t_val*objectSpaceRay.dir[x];
-		  double y_intersection = objectSpaceRay.origin[y] + t_val*objectSpaceRay.dir[y];
-		  double z_intersection = objectSpaceRay.origin[z] + t_val*objectSpaceRay.dir[z];
- 
-		  Point3D intersection_point(x_intersection, y_intersection, z_intersection);
+        double x_intersection = objectSpaceRay.origin[x] + t_val*objectSpaceRay.dir[x];
+        double y_intersection = objectSpaceRay.origin[y] + t_val*objectSpaceRay.dir[y];
+        double z_intersection = objectSpaceRay.origin[z] + t_val*objectSpaceRay.dir[z];
+   
+        Point3D intersection_point(x_intersection, y_intersection, z_intersection);
 
-		  // I need the normal, which is the vector from the centre of the circle to the intersection point, which I guess is the point normalized...
-		  // but that should just be the point because the unit circle has radius 1 
-		  Vector3D intersection_normal(x_intersection, y_intersection, z_intersection);
-		  intersection_normal.normalize();
+        // I need the normal, which is the vector from the centre of the circle to the intersection point, which I guess is the point normalized...
+        // but that should just be the point because the unit circle has radius 1 
+        Vector3D intersection_normal(x_intersection, y_intersection, z_intersection);
+        intersection_normal.normalize();
 
-      //Check if another object was intersected in front of this one
-	    if (!ray.intersection.none && ray.intersection.t_value < t_val){
-        return false;
+        //Check if another object was intersected in front of this one
+        if (!ray.intersection.none && ray.intersection.t_value < t_val){
+          return false;
+        }
+      
+        ray.intersection.point = modelToWorld*intersection_point;
+        ray.intersection.t_value = t_val;
+        ray.intersection.normal = transNorm(worldToModel , intersection_normal); // Vector3D: formed from inverse transpose
+        ray.intersection.normal.normalize();
+        ray.intersection.none = false;
+
+        return true;
       }
-		
-		  ray.intersection.point = modelToWorld*intersection_point;
-		  ray.intersection.t_value = t_val;
-		  ray.intersection.normal = transNorm(worldToModel , intersection_normal); // Vector3D: formed from inverse transpose
-		  ray.intersection.normal.normalize();
-		  ray.intersection.none = false;
-
-		  return true;
     }
-	}
+  //}
 	return false;
 }
 
