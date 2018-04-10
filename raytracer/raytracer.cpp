@@ -36,6 +36,7 @@ void Raytracer::computeTransforms(Scene& scene) {
 }
 
 void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) {
+  const double epsilon = 0.01; //used to get rid of noise in hard shadow
 	for (size_t  i = 0; i < light_list.size(); ++i) {
 		LightSource* light = light_list[i];
 		
@@ -52,7 +53,7 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
     );
     shadow_ray.dir = light_dir;
     shadow_ray.dir.normalize();
-    shadow_ray.origin = ray.intersection.point;
+    shadow_ray.origin = ray.intersection.point + (epsilon * shadow_ray.dir);
 
     bool process_ray = true;
     
@@ -76,7 +77,6 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
       //default lighting
       light->shade(ray, 0);
     }
-
 
 		// Each lightSource provides its own shading function.
 		// Implement shadows here if needed.
