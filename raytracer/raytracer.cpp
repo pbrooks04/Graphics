@@ -40,9 +40,9 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
 	for (size_t  i = 0; i < light_list.size(); ++i) {
    
     //size of area light. Larger val = larger area light
-    const int light_size = 3;
+    const int light_size = 5;
     //light definition. Larger val = more definition/smaller space between shadows
-    const double light_def = 3.5;
+    const double light_def = 5;
     Color avg_shadow;
     avg_shadow[0] = 0;
     avg_shadow[1] = 0;
@@ -101,7 +101,7 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
 	}
 }
 
-Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list) {
+Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int depth) {
 	Color col(0.0, 0.0, 0.0); 
 	traverseScene(scene, ray); 
 
@@ -110,6 +110,17 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list) {
 	if (!ray.intersection.none) {
 		computeShading(ray, light_list, scene); 
 		col = ray.col;  
+  
+    if (depth>0){
+      Ray3D reflect_ray;
+      reflect_ray.origin = ray.intersection.point;
+      reflect_ray.dir = ray.dir - 2*(ray.dir.dot(ray.intersection.normal))*ray.intersection.normal;
+      reflect_ray.origin = ray.intersection.point + (0.01 * reflect_ray.dir);
+      reflect_ray.dir.normalize();
+      
+      depth = depth - 1;
+      col = col + shadeRay(reflect_ray, scene, light_list, depth);
+    }
 	}
 
 	// You'll want to call shadeRay recursively (with a different ray, 
@@ -208,7 +219,7 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 			
 
 				  //Color col = shadeRay(ray, scene, light_list);
-					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list);
+					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 4);
 					// Need to take average of colour from each ray
 
 							
