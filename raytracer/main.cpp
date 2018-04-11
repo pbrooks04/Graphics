@@ -33,6 +33,12 @@ int main(int argc, char* argv[])
 	Material jade(Color(0, 0, 0), Color(0.54,0.89,0.63),
 		Color(0.316228,0.316228,0.316228),
 		12.8);
+	Material red(Color(0, 0, 0), Color(0.88,0.11,0.13),
+		Color(0.916228,0.316228,0.316228),
+		12.8);
+	Material blue(Color(0.3, 0.3, 0.3), Color(0.3, 0.3, 0.8),
+		Color(0.6, 0.6, 0.9),
+		30.0);
 
 	// Defines a point light source.
 	PointLight* pLight = new PointLight(Point3D(0,0,5), Color(0.9,0.9,0.9));
@@ -72,12 +78,22 @@ int main(int argc, char* argv[])
 	scene.push_back(sphere);
 */
 ///*
-	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &gold);
-	scene.push_back(cylinder);
 	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
 	scene.push_back(sphere);
-  SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
+	SceneNode* cylinder = new SceneNode(new UnitCylinder(), &red);
+	scene.push_back(cylinder);
+	SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
 	scene.push_back(plane);
+
+	SceneNode* plane2 = new SceneNode(new UnitSquare(), &blue);
+	scene.push_back(plane2);
+	//
+	// 
+	// ***** Refraction *****
+	//
+	sphere->mat->enableRefraction(0.9);
+	//
+	//
 //*/
 /*
 	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
@@ -95,7 +111,7 @@ int main(int argc, char* argv[])
 	sphere->scale(Point3D(0, 0, 0), factor1);
 
 	double factor2[3] = { 6.0, 6.0, 6.0 };
-	plane->translate(Vector3D(0, 0, -7));
+	plane->translate(Vector3D(0, 0, -8));
 	plane->rotate('z', 45);
 	plane->scale(Point3D(0, 0, 0), factor2);
 
@@ -105,6 +121,12 @@ int main(int argc, char* argv[])
 	cylinder->rotate('x', 110);
 	//cylinder->rotate('y', 45);
 	cylinder->scale(Point3D(0, 0, 0), factor3);
+
+	double factor4[3] = {12.0, 12.0, 12.0};
+	plane2->translate(Vector3D(-5,-8,-5));
+	plane2->rotate('z', 45);
+	plane2->rotate('y', 45);
+	plane2->scale(Point3D(0,0,0), factor4);
 
 	// Render the scene, feel free to make the image smaller for
 	// testing purposes.	

@@ -35,4 +35,7 @@ private:
     // object in the scene.
 	void computeTransforms(Scene& scene);
 
+	Vector3D refract(const Vector3D &I, const Vector3D &N, const float &ior);
+
+	double clamp(double value, double lo, double hi);
 };

@@ -13,6 +13,7 @@
 #include <iostream>
 #include <cstdlib>
 
+
 void Raytracer::traverseScene(Scene& scene, Ray3D& ray)  {
 	for (size_t i = 0; i < scene.size(); ++i) {
 		SceneNode* node = scene[i];
@@ -108,19 +109,37 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 	// Don't bother shading if the ray didn't hit 
 	// anything.
 	if (!ray.intersection.none) {
-		computeShading(ray, light_list, scene); 
-		col = ray.col;  
+		if (!ray.intersection.mat->refraction_enabled){
+
+			computeShading(ray, light_list, scene); 
+			col = ray.col;  
   
-    if (depth>0){
-      Ray3D reflect_ray;
-      reflect_ray.origin = ray.intersection.point;
-      reflect_ray.dir = ray.dir - 2*(ray.dir.dot(ray.intersection.normal))*ray.intersection.normal;
-      reflect_ray.origin = ray.intersection.point + (0.01 * reflect_ray.dir);
-      reflect_ray.dir.normalize();
+			if (depth>0){
+			  Ray3D reflect_ray;
+			  reflect_ray.origin = ray.intersection.point;
+			  reflect_ray.dir = ray.dir - 2*(ray.dir.dot(ray.intersection.normal))*ray.intersection.normal;
+			  reflect_ray.origin = ray.intersection.point + (0.01 * reflect_ray.dir);
+			  reflect_ray.dir.normalize();
       
-      depth = depth - 1;
-      col = col + shadeRay(reflect_ray, scene, light_list, depth);
-    }
+			  depth = depth - 1;
+			  col = col + shadeRay(reflect_ray, scene, light_list, depth);
+			}
+
+		} else { // Refract ray: no shading 
+			
+			// col = ray.col;
+
+			if (depth>0){
+				Vector3D refracted_ray_dir( refract(ray.dir, ray.intersection.normal, ray.intersection.mat->ior ) );
+				Ray3D refracted_ray;
+				refracted_ray.origin = ray.intersection.point;
+				refracted_ray.dir = refracted_ray_dir;
+				refracted_ray.dir.normalize();
+
+				depth = depth - 1;
+				col = col + shadeRay(refracted_ray, scene, light_list, depth);
+			}
+		}
 	}
 
 	// You'll want to call shadeRay recursively (with a different ray, 
@@ -139,8 +158,9 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 
 	// Create more rays for each pixel here
 
-	// Divide pixel into 3x3 grid and fire a ray at a random location in each segment
+	// Divide pixel into nxn grid and fire a ray at a random location in each segment
 
+	
 
 	// Construct a ray for each pixel.
   #pragma omp parallel for
@@ -152,60 +172,30 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 			// Anti Aliasing Implementation
 			//
 
-			// inside each pixel, create 3x3 grid:
-		    // properties: grid boundaries are separated by a factor of 1/3 = 0.333
-
-			// factor 0.5 puts the ray in the middle, so I want to pick randoms within the following boundaries:
-			// ROW 1
-			// x (0.000, 0.333) y (0.0, 0.333)
-			// x (0.333, 0.666) y (0.0, 0.333)
-			// x (0.666, 0.999) y (0.0, 0.333)
-
-			// ROW 2
-			// x (0.000, 0.333) y (0.333, 0.666)
-			// x (0.333, 0.666) y (0.333, 0.666)
-			// x (0.666, 0.999) y (0.333, 0.666)
-
-			// ROW 3
-			// x (0.000, 0.333) y (0.666, 0.999)
-			// x (0.333, 0.666) y (0.666, 0.999)
-			// x (0.666, 0.999) y (0.666, 0.999)
-
-			//const double one_third = 0.333;
+			// inside each pixel, create nxn grid:
+		   
 			Color avg_color_for_pixel;
 			int num_rays_fired_per_pixel = 9;
-			const double one_third = 1 / sqrt(num_rays_fired_per_pixel);
-      const double sq_root = sqrt(num_rays_fired_per_pixel);
+			const double one_nth = 1 / sqrt(num_rays_fired_per_pixel);
+			const double sq_root = sqrt(num_rays_fired_per_pixel);
 
-			for (double x_boundary_min = 0.000; x_boundary_min  < sq_root*one_third - 0.001; x_boundary_min += one_third){ // Do not want it to run with x_bound_min = 0.999, it will be in another pixel
-				for( double y_boundary_min = 0.000; y_boundary_min  < sq_root*one_third - 0.001; y_boundary_min += one_third){
+			for (double x_boundary_min = 0.000; x_boundary_min  < sq_root*one_nth - 0.001; x_boundary_min += one_nth){ // Do not want it to run with x_bound_min = 0.999, it will be in another pixel
+				for( double y_boundary_min = 0.000; y_boundary_min  < sq_root*one_nth - 0.001; y_boundary_min += one_nth){
 					// Sets up ray origin and direction in view space, 
 					// image plane is at z = -1.
 					Point3D origin(0, 0, 0);
 					Point3D imagePlane;
-					// Modify to be in some segment and obtain a random offset within it
-					// Can obtain a random integer up to 1000 and divide it to get a 3 digit double
+					
 
-
-					//int x_rand_int = std::rand() % 1000;
-
-					//double x_rand_double = (double)std::rand() / RAND_MAX;
-
-
-					double x_rand_double =  std::abs( (double) (std::rand() / (RAND_MAX + 1.0)) );
-
-					//printf("%d \n", x_rand_double);
-
-					//double y_rand = 
+					double x_rand_double = (double) (std::rand() / (RAND_MAX + 1.0));
+					double y_rand_double = (double) (std::rand() / (RAND_MAX + 1.0));
 
 
 					//imagePlane[0] = (-double(image.width)/2 + 0.5 + j)/factor;
 					//imagePlane[1] = (-double(image.height)/2 + 0.5 + i)/factor;
 
-					// Ideally would like to change the added one_third/2 to a random double d :  0 < d < one_third
-
-					imagePlane[0] = (-double(image.width)/2 + (x_boundary_min + one_third/2) + j)/factor;
-					imagePlane[1] = (-double(image.height)/2 + (y_boundary_min + one_third/2) + i)/factor;
+					imagePlane[0] = (-double(image.width)/2 + (x_boundary_min + one_nth*x_rand_double) + j)/factor;
+					imagePlane[1] = (-double(image.height)/2 + (y_boundary_min + one_nth*y_rand_double) + i)/factor;
 					imagePlane[2] = -1;
 
 			
@@ -219,7 +209,7 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 			
 
 				  //Color col = shadeRay(ray, scene, light_list);
-					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 4);
+					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 2); // **********************************
 					// Need to take average of colour from each ray
 
 							
@@ -235,3 +225,27 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 	}
 }
 
+Vector3D Raytracer::refract(const Vector3D &I, const Vector3D &N, const float &ior)
+{
+	double cosi = clamp( I.dot(N), -1, 1 );
+	float etai = 1, etat = ior;
+	Vector3D n = N;
+	if (cosi < 0) { 
+		cosi = -cosi; 
+	} else { 
+		std::swap(etai, etat);
+		n= -N;
+	}
+	float eta = etai / etat;
+	float k = 1 - eta * eta * (1 - cosi * cosi);
+
+	return k < 0 ? Vector3D(0,0,0) : eta * I + (eta * cosi - std::sqrt(k)) * n;
+} 
+
+double Raytracer::clamp(double value, double lo, double hi){
+	if (value < lo)
+		return lo;
+	else if (value > hi)
+		return hi;
+	return value;
+}
