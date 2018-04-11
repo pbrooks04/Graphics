@@ -102,7 +102,10 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
 	}
 }
 
-Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int depth) {
+Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list,
+                          int depth,
+                          bool env_map_loaded, unsigned long int widthBMP, long int heightBMP, unsigned char *rbuffer, unsigned char *gbuffer, unsigned char *bbuffer) {
+
 	Color col(0.0, 0.0, 0.0); 
 	traverseScene(scene, ray); 
 
@@ -122,7 +125,8 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 			  reflect_ray.dir.normalize();
       
 			  depth = depth - 1;
-			  col = col + shadeRay(reflect_ray, scene, light_list, depth);
+			  col = col + shadeRay(reflect_ray, scene, light_list, depth, 
+			                       env_map_loaded, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer);
 			}
 
 		} else { // Refract ray: no shading 
@@ -137,9 +141,12 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 				refracted_ray.dir.normalize();
 
 				depth = depth - 1;
-				col = col + shadeRay(refracted_ray, scene, light_list, depth);
+				col = col + shadeRay(refracted_ray, scene, light_list, depth,
+			                         env_map_loaded, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer);
 			}
 		}
+	} else if (env_map_loaded){
+		col = getEnvMapPixelColour(ray.dir, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer);
 	}
 
 	// You'll want to call shadeRay recursively (with a different ray, 
@@ -156,11 +163,26 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 
 	viewToWorld = camera.initInvViewMatrix();
 
+	//
+	// ***** Environment Mapping *****
+	// Load image for missed rays
+	//
+	//
+	// Image source https://raptor.developpez.com/tutorial/opengl/skybox/
+	//
+	char fileName[] = "cubemaps/sky.bmp"; 
+	unsigned long int widthBMP;
+	long int heightBMP;
+	unsigned char *rbuffer;
+	unsigned char *gbuffer;
+	unsigned char *bbuffer;
+	bool image_read_failed;
+
+	image_read_failed = bmp_read(fileName, &widthBMP, &heightBMP, &rbuffer, &gbuffer, &bbuffer);
+
 	// Create more rays for each pixel here
 
 	// Divide pixel into nxn grid and fire a ray at a random location in each segment
-
-	
 
 	// Construct a ray for each pixel.
   #pragma omp parallel for
@@ -197,8 +219,6 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 					imagePlane[0] = (-double(image.width)/2 + (x_boundary_min + one_nth*x_rand_double) + j)/factor;
 					imagePlane[1] = (-double(image.height)/2 + (y_boundary_min + one_nth*y_rand_double) + i)/factor;
 					imagePlane[2] = -1;
-
-			
 			
 			
 					// TODO: Convert ray to world space  
@@ -209,7 +229,8 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 			
 
 				  //Color col = shadeRay(ray, scene, light_list);
-					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 2); // **********************************
+					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 4,
+																		 !image_read_failed, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer); // *****Env Mapping*****
 					// Need to take average of colour from each ray
 
 							
@@ -252,4 +273,156 @@ double Raytracer::clamp(double value, double lo, double hi){
 	else if (value > hi)
 		return hi;
 	return value;
+}
+//
+// From recommended wiki page https://en.wikipedia.org/wiki/Cube_mapping
+//
+Vector3D Raytracer::convert_xyz_to_cube_uv(double x, double y, double z)
+{
+  float absX = std::abs(x);
+  float absY = std::abs(y);
+  float absZ = std::abs(z);
+  
+  int isXPositive = x > 0 ? 1 : 0;
+  int isYPositive = y > 0 ? 1 : 0;
+  int isZPositive = z > 0 ? 1 : 0;
+  
+  float maxAxis, uc, vc;
+
+  double face_index, u, v;
+  
+  // POSITIVE X
+  if (isXPositive && absX >= absY && absX >= absZ) {
+    // u (0 to 1) goes from +z to -z
+    // v (0 to 1) goes from -y to +y
+    maxAxis = absX;
+    uc = -z;
+    vc = y;
+    face_index = 0;
+  }
+  // NEGATIVE X
+  if (!isXPositive && absX >= absY && absX >= absZ) {
+    // u (0 to 1) goes from -z to +z
+    // v (0 to 1) goes from -y to +y
+    maxAxis = absX;
+    uc = z;
+    vc = y;
+    face_index = 1;
+  }
+  // POSITIVE Y
+  if (isYPositive && absY >= absX && absY >= absZ) {
+    // u (0 to 1) goes from -x to +x
+    // v (0 to 1) goes from +z to -z
+    maxAxis = absY;
+    uc = x;
+    vc = -z;
+    face_index = 2;
+  }
+  // NEGATIVE Y
+  if (!isYPositive && absY >= absX && absY >= absZ) {
+    // u (0 to 1) goes from -x to +x
+    // v (0 to 1) goes from -z to +z
+    maxAxis = absY;
+    uc = x;
+    vc = z;
+    face_index = 3;
+  }
+  // POSITIVE Z
+  if (isZPositive && absZ >= absX && absZ >= absY) {
+    // u (0 to 1) goes from -x to +x
+    // v (0 to 1) goes from -y to +y
+    maxAxis = absZ;
+    uc = x;
+    vc = y;
+    face_index = 4;
+  }
+  // NEGATIVE Z
+  if (!isZPositive && absZ >= absX && absZ >= absY) {
+    // u (0 to 1) goes from +x to -x
+    // v (0 to 1) goes from -y to +y
+    maxAxis = absZ;
+    uc = -x;
+    vc = y;
+    face_index = 5;
+  }
+
+  // Convert range from -1 to 1 to 0 to 1
+  u = 0.5f * (uc / maxAxis + 1.0f);
+  v = 0.5f * (vc / maxAxis + 1.0f);
+
+  return Vector3D(face_index, u, v);
+}
+
+Color Raytracer::getEnvMapPixelColour(Vector3D dir, unsigned long int width, long int height, unsigned char *rbuffer, unsigned char *gbuffer, unsigned char *bbuffer){
+
+	// Find corresponding uv corrdinates and face index
+	Vector3D values = convert_xyz_to_cube_uv(dir[0], dir[1], dir[2]);
+	
+	int face_index = (int) values[0];
+	float u = values[1];
+	float v = values[2];
+
+	int face_origin_x, face_origin_y;
+
+	// Assume image origin (0, 0) is at top left corner
+	//	Set face origin to bottom left corner of face
+	switch(face_index){
+		case 0:
+			face_origin_x = (int) (width / 2);
+			face_origin_y = (int) (height*2/3);
+			break;
+		case 1:
+			face_origin_x = 0;
+			face_origin_y = (int) (height*2/3);
+			break;
+		case 2:
+			face_origin_x = (int) (width/4);
+			face_origin_y = (int) (height/3);
+			break;
+		case 3:
+			face_origin_x = (int) (width/4);
+			face_origin_y = (int) height;
+			break;
+		case 4:
+			face_origin_x = (int) (width/4);
+			face_origin_y = (int) (height*2/3);
+			break;
+		case 5:
+			face_origin_x = (int) (width*3/4);
+			face_origin_y = (int) (height*2/3);
+			break;
+	}
+
+	int pixel_x = clamp(face_origin_x + (int) (u * width/4), 0 , width-1);
+	int pixel_y = clamp(face_origin_y - (int) (v * height/3), 0, std::abs(height)-1); // Negative y direction for image origin at top left
+
+	/*
+      Reminder
+	  // Set color of pixel (i,j) to col
+		void setColorAtPixel(int i, int j, Color& col) {
+			rbuffer[i*width+j] = int(col[0]*255);
+			gbuffer[i*width+j] = int(col[1]*255);
+			bbuffer[i*width+j] = int(col[2]*255);
+		}
+	 */
+
+
+	 //
+	 // ***** Environment Mapping *****
+	 //   Partial Implementation
+	 //
+	 //		This is where the code fails, it will run for some time then give a segfault for the code below.
+	 //		I don't understand why since x and y values are bounded to the size of the image and values are 
+	 //		accessed just as in the starter code.
+	 //
+
+
+	/*
+	Color env_pixel_colour( rbuffer[pixel_x*width+pixel_y] / 255,
+							gbuffer[pixel_x*width+pixel_y] / 255,
+							bbuffer[pixel_x*width+pixel_y] / 255);
+	*/
+
+	Color env_pixel_colour(0, 0, 0); 
+	return env_pixel_colour;
 }
