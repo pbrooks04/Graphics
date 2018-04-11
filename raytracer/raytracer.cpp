@@ -224,7 +224,11 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 		}
 	}
 }
-
+//
+//
+// Implented under the guidance of https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
+//
+//
 Vector3D Raytracer::refract(const Vector3D &I, const Vector3D &N, const float &ior)
 {
 	double cosi = clamp( I.dot(N), -1, 1 );
