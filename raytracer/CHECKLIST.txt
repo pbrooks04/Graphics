@@ -2,8 +2,8 @@
 Assignment 3 Checklist/Grading sheet
 -------------------------------------
 
-Name: 
-Student ID:
+Name: Peter Brooks
+Student ID: 999832515
 
 -----------------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ A. PLEASE ANSWER THE FOLLOWING QUESTIONS (your assignment will not be graded oth
  
    http://www.cs.toronto.edu/~kyros/courses/418/policy.2010f.html
 
-   ___Yes   ___No
+   __x_Yes   ___No
 
 
 
@@ -26,13 +26,13 @@ A. PLEASE ANSWER THE FOLLOWING QUESTIONS (your assignment will not be graded oth
  
    policy on assignments done in collaboration)
 
-   ___Yes   ___No
+   __x_Yes   ___No
 
    
 
 If you checked yes, please supply the following
 
-       Student name: 
+       Student name: Josh Davis
        Portion(s) of assignment completed by that student (see checklist below)
 
 
@@ -56,19 +56,19 @@ B. PLACE AN (X) IN FRONT OF PORTIONS OF THE ASSIGNMENT THAT YOU COMPLETED IN FUL
 
  
   
-___   Ray casting
+_x__   Ray casting
   
   
-___   Ray-sphere intersection
-  
-
-___   Ray-square intersection
+_x__   Ray-sphere intersection
   
 
-___   Phong illumination (ambient, diffuse, and specular components)
+_x__   Ray-square intersection
+  
+
+_x__   Phong illumination (ambient, diffuse, and specular components)
                
   
-___   Written report
+__x_   Written report
 
 
 
