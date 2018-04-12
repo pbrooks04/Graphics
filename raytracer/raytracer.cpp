@@ -41,17 +41,17 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
 	for (size_t  i = 0; i < light_list.size(); ++i) {
    
     //size of area light. Larger val = larger area light
-    const int light_size = 5;
+    const int light_size = 0;
     //light definition. Larger val = more definition/smaller space between shadows
-    const double light_def = 5;
+    const double light_def = 0;
     Color avg_shadow;
     avg_shadow[0] = 0;
     avg_shadow[1] = 0;
     avg_shadow[2] = 0;
 
-    #pragma omp parallel for
-    for (int j=0; j<(2*light_size); j++){
-      for (int k=0; k<(2*light_size); k++){
+    //omp parallel for
+    for (int j=0; j<=(2*light_size); j++){
+      for (int k=0; k<=(2*light_size); k++){
 		
         LightSource* light = light_list[i];
           
@@ -96,9 +96,9 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
       }
     }
 
-    ray.col[0] = avg_shadow[0]/pow((light_size*2), 2.0);
-    ray.col[1] = avg_shadow[1]/pow((light_size*2), 2.0);
-    ray.col[2] = avg_shadow[2]/pow((light_size*2), 2.0);
+    ray.col[0] = avg_shadow[0];///pow((light_size*2), 2.0);
+    ray.col[1] = avg_shadow[1];///pow((light_size*2), 2.0);
+    ray.col[2] = avg_shadow[2];///pow((light_size*2), 2.0);
 	}
 }
 
@@ -186,64 +186,66 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 
 	// Construct a ray for each pixel.
   #pragma omp parallel for
-	for (int i = 0; i < image.height; i++) {
-		for (int j = 0; j < image.width; j++) {
+  {
+    for (int i = 0; i < image.height; i++) {
+      for (int j = 0; j < image.width; j++) {
 
 
-			//
-			// Anti Aliasing Implementation
-			//
+        //
+        // Anti Aliasing Implementation
+        //
 
-			// inside each pixel, create nxn grid:
-		   
-			Color avg_color_for_pixel;
-			int num_rays_fired_per_pixel = 9;
-			const double one_nth = 1 / sqrt(num_rays_fired_per_pixel);
-			const double sq_root = sqrt(num_rays_fired_per_pixel);
+        // inside each pixel, create nxn grid:
+         
+        Color avg_color_for_pixel;
+        int num_rays_fired_per_pixel = 9;
+        const double one_nth = 1 / sqrt(num_rays_fired_per_pixel);
+        const double sq_root = sqrt(num_rays_fired_per_pixel);
 
-			for (double x_boundary_min = 0.000; x_boundary_min  < sq_root*one_nth - 0.001; x_boundary_min += one_nth){ // Do not want it to run with x_bound_min = 0.999, it will be in another pixel
-				for( double y_boundary_min = 0.000; y_boundary_min  < sq_root*one_nth - 0.001; y_boundary_min += one_nth){
-					// Sets up ray origin and direction in view space, 
-					// image plane is at z = -1.
-					Point3D origin(0, 0, 0);
-					Point3D imagePlane;
-					
+        for (double x_boundary_min = 0.000; x_boundary_min  < sq_root*one_nth - 0.001; x_boundary_min += one_nth){ // Do not want it to run with x_bound_min = 0.999, it will be in another pixel
+          for( double y_boundary_min = 0.000; y_boundary_min  < sq_root*one_nth - 0.001; y_boundary_min += one_nth){
+            // Sets up ray origin and direction in view space, 
+            // image plane is at z = -1.
+            Point3D origin(0, 0, 0);
+            Point3D imagePlane;
+            
 
-					double x_rand_double = (double) (std::rand() / (RAND_MAX + 1.0));
-					double y_rand_double = (double) (std::rand() / (RAND_MAX + 1.0));
+            double x_rand_double = (double) (std::rand() / (RAND_MAX + 1.0));
+            double y_rand_double = (double) (std::rand() / (RAND_MAX + 1.0));
 
 
-					//imagePlane[0] = (-double(image.width)/2 + 0.5 + j)/factor;
-					//imagePlane[1] = (-double(image.height)/2 + 0.5 + i)/factor;
+            //imagePlane[0] = (-double(image.width)/2 + 0.5 + j)/factor;
+            //imagePlane[1] = (-double(image.height)/2 + 0.5 + i)/factor;
 
-					imagePlane[0] = (-double(image.width)/2 + (x_boundary_min + one_nth*x_rand_double) + j)/factor;
-					imagePlane[1] = (-double(image.height)/2 + (y_boundary_min + one_nth*y_rand_double) + i)/factor;
-					imagePlane[2] = -1;
-			
-			
-					// TODO: Convert ray to world space  
-					Vector3D direction = imagePlane - origin; // Will always just be imagePlane since origin is (0,0,0)
-					Vector3D ray_direction( viewToWorld * direction);
-					Point3D ray_origin(viewToWorld*origin);
-					Ray3D ray(ray_origin, ray_direction);
-			
+            imagePlane[0] = (-double(image.width)/2 + (x_boundary_min + one_nth*x_rand_double) + j)/factor;
+            imagePlane[1] = (-double(image.height)/2 + (y_boundary_min + one_nth*y_rand_double) + i)/factor;
+            imagePlane[2] = -1;
+        
+        
+            // TODO: Convert ray to world space  
+            Vector3D direction = imagePlane - origin; // Will always just be imagePlane since origin is (0,0,0)
+            Vector3D ray_direction( viewToWorld * direction);
+            Point3D ray_origin(viewToWorld*origin);
+            Ray3D ray(ray_origin, ray_direction);
+        
 
-				  //Color col = shadeRay(ray, scene, light_list);
-					avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 4,
-																		 !image_read_failed, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer); // *****Env Mapping*****
-					// Need to take average of colour from each ray
+            //Color col = shadeRay(ray, scene, light_list);
+            avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 4,
+                                       !image_read_failed, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer); // *****Env Mapping*****
+            // Need to take average of colour from each ray
 
-							
-				}
-			}
-		    avg_color_for_pixel[0] = avg_color_for_pixel[0] / num_rays_fired_per_pixel;
-			avg_color_for_pixel[1] = avg_color_for_pixel[1] / num_rays_fired_per_pixel;
-			avg_color_for_pixel[2] = avg_color_for_pixel[2] / num_rays_fired_per_pixel;
+                
+          }
+        }
+          avg_color_for_pixel[0] = avg_color_for_pixel[0] / num_rays_fired_per_pixel;
+        avg_color_for_pixel[1] = avg_color_for_pixel[1] / num_rays_fired_per_pixel;
+        avg_color_for_pixel[2] = avg_color_for_pixel[2] / num_rays_fired_per_pixel;
 
-			avg_color_for_pixel.clamp();
-			image.setColorAtPixel(i, j, avg_color_for_pixel);
-		}
-	}
+        avg_color_for_pixel.clamp();
+        image.setColorAtPixel(i, j, avg_color_for_pixel);
+      }
+	  }
+  }
 }
 //
 //
