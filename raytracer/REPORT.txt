@@ -1,0 +1,68 @@
+CSC418 A3 Report
+
+Josh Davis 1000461742
+Peter Brooks 999832515
+
+**********************
+*   CURRENT STATUS   *
+**********************
+
+The currently implemented scene consists of two planes, a 
+cylinder and a “glass” ellipsoid. Rays are recursively 
+traced up to 4 times and each pixel is divided into a 
+3x3 grid with a ray being sent in a random section of 
+each segment. Rays which hit the ellipsoid are refracted 
+and others are reflected. Environment mapping is 
+partially implemented. It loads an image but fails to 
+read from colour buffers due to seg fault errors that 
+occur after some time. Values are attempted by indexing 
+as in the 
+"Image struct setColorAtPixel(int i, int j, Color& col)" 
+by using an index of [x*width+y] for each buffer. x  
+and y values are bounded by 0 and image width-1 or 
+height-1 respectively. Index origins are defined assuming 
+that the origin of the image (0,0) is at the top left 
+corner. Region origins are set to be the bottom left 
+pixel of a face, therefore the y direction value (v) 
+is subtracted.
+
+**********************
+*   FILE STRUCTURE   *
+**********************
+
+The structure is pretty much the same as in the starter 
+code. Implementations were written were hinted within 
+the starter code comments and helper methods were created 
+to keep things clean.
+
+***********************
+*   WORK ALLOCATION   *
+***********************
+
+Part A) 
+  Images are in the folder ‘solution images’ - Peter
+
+  Part B)
+    Recursive Ray Tracing - Josh
+    Hard Shadows - Josh
+    Speed Enhancement: Running Parallel - Josh
+    Anti-aliasing - Peter
+    Soft Shadows - Josh
+    Environment Mapping (partial) - Peter
+    Refraction - Peter 
+    Non-Trivial Compound (Cylinder) - Peter
+
+  Other
+    Bug fixes and optimizations - Josh
+      (Phong, cylinder, anti-aliasing)
+
+***************
+*   SOURCES   *
+***************
+
+Cube mapping algorithm: https://en.wikipedia.org/wiki/Cube_mapping
+Cube map image: https://raptor.developpez.com/tutorial/opengl/skybox/
+Refraction algorithm: https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
+
+
+
