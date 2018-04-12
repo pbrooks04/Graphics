@@ -9,22 +9,70 @@ Peter Brooks 999832515
 
 The currently implemented scene consists of two planes, a 
 cylinder and a “glass” ellipsoid. Rays are recursively 
-traced up to 4 times and each pixel is divided into a 
-3x3 grid with a ray being sent in a random section of 
-each segment. Rays which hit the ellipsoid are refracted 
-and others are reflected. Environment mapping is 
-partially implemented. It loads an image but fails to 
-read from colour buffers due to seg fault errors that 
-occur after some time. Values are attempted by indexing 
-as in the 
-"Image struct setColorAtPixel(int i, int j, Color& col)" 
-by using an index of [x*width+y] for each buffer. x  
-and y values are bounded by 0 and image width-1 or 
-height-1 respectively. Index origins are defined assuming 
-that the origin of the image (0,0) is at the top left 
-corner. Region origins are set to be the bottom left 
-pixel of a face, therefore the y direction value (v) 
-is subtracted.
+traced up to 4 times and each pixel is divided into a 3x3 
+grid with a ray being sent in a random section of each 
+segment. Rays which hit the ellipsoid are refracted and 
+others are reflected. 
+
+Environment mapping is partially implemented. 
+It loads an image with bmp_read but fails to read from 
+colour buffers due to seg fault errors that occur after 
+some time. Values are attempted by indexing as in the 
+Image struct setColorAtPixel(int i, int j, Color& col) 
+by using an index of [x*width+y] for each buffer. 
+x  and y values are bounded by 0 and image width-1 or 
+height-1 respectively. 
+Index origins are defined assuming that the origin of the 
+image (0,0) is at the top left corner. Region origins are 
+set to be the bottom left pixel of a face, therefore the 
+y direction value (v) is subtracted. 
+
+Refraction is implemented by creating a new ray whose 
+direction is determined by Snell’s law. See source 
+reference below.
+
+The cylinder is described with the unit circle and then 
+bounded between a z max and min. Normals on the quadratic 
+surface is orthogonal to the z axis and has an xy value 
+of the point on the unit circle.
+
+Hard shadows are implemented by creating a new ray whose 
+origin is where the ray from the camera made an 
+intersection, and whose direction is from that 
+intersection point to the point light source. The 
+intersection point needed to be offset to avoid there 
+being accidental collisions that would create ‘noise’ in 
+the final image.
+If it was found that the newly created ray intersected 
+with another object, then the camera ray would undergo 
+different processing (or no processing) in order for that 
+specific pixel to appear as though in shade.
+
+Soft shadows involved much of the above process but now 
+took multiple light sources (as small offsets from the 
+defined point light source) in order to approximate an 
+area light. The average of the values taken for each
+approximated light source was then used to set the 
+appropriate shading level for a pixel, thus providing 
+soft shadows.
+
+Recursive rays were implemented similarly to shadows, 
+except instead of the new ray being directed from the 
+intersection point to the point light source, it would 
+simply be the direction of the incoming ray reflected 
+across the normal at the intersection point. From there, 
+whatever color was found at the intersection point of the 
+new reflected ray, was then added to the current color of 
+the pixel. This was done recursively using a ‘depth’ 
+value, allowing several layers of reflection to occur.
+
+The OpenMP tools were used for speeding up rendering 
+times, however, much of the work could not be 
+parallelized due to the fact that some resources, 
+such as ‘average colors’ would have had to be shared 
+across each thread, which would have been impossible or 
+very expensive, thus not allowing that great of a speed 
+up in several parts of our program.
 
 **********************
 *   FILE STRUCTURE   *
@@ -32,15 +80,15 @@ is subtracted.
 
 The structure is pretty much the same as in the starter 
 code. Implementations were written were hinted within 
-the starter code comments and helper methods were created 
-to keep things clean.
+the starter code comments and helper methods were 
+created to keep things clean.
 
 ***********************
 *   WORK ALLOCATION   *
 ***********************
 
 Part A) 
-  Images are in the folder ‘solution images’ - Peter
+  Images are located in the folder ‘solution images’ - Peter
 
   Part B)
     Recursive Ray Tracing - Josh
@@ -63,6 +111,4 @@ Part A)
 Cube mapping algorithm: https://en.wikipedia.org/wiki/Cube_mapping
 Cube map image: https://raptor.developpez.com/tutorial/opengl/skybox/
 Refraction algorithm: https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/reflection-refraction-fresnel
-
-
 
