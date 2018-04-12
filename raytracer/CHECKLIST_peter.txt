@@ -1,0 +1,82 @@
+-------------------------------------
+Assignment 3 Checklist/Grading sheet
+-------------------------------------
+
+Name: Peter Brooks
+Student ID: 999832515
+
+-----------------------------------------------------------------------------------------
+
+A. PLEASE ANSWER THE FOLLOWING QUESTIONS (your assignment will not be graded otherwise!)
+
+
+  
+1. I verify that I completed this assignment according to the 
+   Academic Honesty policy stated in
+ 
+   http://www.cs.toronto.edu/~kyros/courses/418/policy.2010f.html
+
+   __x_Yes   ___No
+
+
+
+
+2. I collaborated on this assignment with another student 
+   (see http://www.cs.toronto.edu/~kyros/courses/418/policy.2010f.html for
+ 
+   policy on assignments done in collaboration)
+
+   __x_Yes   ___No
+
+   
+
+If you checked yes, please supply the following
+
+       Student name: Josh Davis 1000461742
+       Portion(s) of assignment completed by that student (see checklist below)
+		Recursive ray tracing, hard shadows, Speed enhancement: running parallel
+		and soft shadows
+
+-----------------------------------------------------------------------------------------
+
+
+B. PLACE AN (X) IN FRONT OF PORTIONS OF THE ASSIGNMENT THAT YOU COMPLETED IN FULL.
+
+   
+   If a portion of the assignment was not completed fully, please provide
+ 
+   additional information so that we can determine whether or not you are eligible
+ 
+  for partial credit. THE MORE INFORMATION YOU SUPPLY (EG. FILE WHICH CONTAINS
+ 
+  PARTIAL CODE, FUNCTION NAME, ETC, SUGGESTIONS ON WHERE AND WHAT TO LOOK FOR IN 
+
+   YOUR PARTIAL IMPLEMENTATION, DETAILED COMMENTS IN YOUR CODE, ETC) THE MORE LIKELY IT IS
+ 
+   WE WILL BE ABLE TO MAKE AN ACCURATE ASSESSMENT
+
+ 
+  
+_x__   Ray casting
+  
+  
+_x__   Ray-sphere intersection
+  
+
+_x__   Ray-square intersection
+  
+
+_x__   Phong illumination (ambient, diffuse, and specular components)
+               
+  
+__x_   Written report
+
+	Non-Trivial Compound (Cylinder)
+	Refraction
+	Environment Mapping (partial)
+	Anti-aliasing
+	
+
+
+
+-------------------------------------------------------------------------------- 
