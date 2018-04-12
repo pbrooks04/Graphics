@@ -32,9 +32,10 @@ A. PLEASE ANSWER THE FOLLOWING QUESTIONS (your assignment will not be graded oth
 
 If you checked yes, please supply the following
 
-       Student name: Josh Davis
+       Student name: Josh Davis 1000461742
        Portion(s) of assignment completed by that student (see checklist below)
-
+		Recursive ray tracing, hard shadows, Speed enhancement: running parallel
+		and soft shadows
 
 -----------------------------------------------------------------------------------------
 
