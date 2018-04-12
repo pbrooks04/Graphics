@@ -74,10 +74,11 @@ void PointLight::shade(Ray3D& ray, int mode) {
   if(mode == 0){
     ray.col = diffuse_component + ambient_component + specular_component;
   } else if (mode == 1){
-    ray.col = ambient_component;
-    //ray.col[0] = 0.0;
-    //ray.col[1] = 0.0;
-    //ray.col[2] = 0.0;
+    // Optional lighting for when the object is in shade
+    //ray.col = ambient_component;
+    ray.col[0] = 0.0;
+    ray.col[1] = 0.0;
+    ray.col[2] = 0.0;
   }
   ray.col.clamp();
 }

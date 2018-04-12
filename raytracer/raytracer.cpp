@@ -37,30 +37,34 @@ void Raytracer::computeTransforms(Scene& scene) {
 }
 
 void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) {
-  const double epsilon = 0.01; //used to get rid of noise in hard shadow
+  const double epsilon = 0.01; // Used to get rid of noise in hard shadow
 	for (size_t  i = 0; i < light_list.size(); ++i) {
    
-    //size of area light. Larger val = larger area light
-    const int light_size = 0;
-    //light definition. Larger val = more definition/smaller space between shadows
-    const double light_def = 0;
+    // Size of area light. Larger val = larger area light
+    const int light_size = 4;
+    // Light definition. Larger val = more definition/smaller space between shadows
+    const double light_def = 4;
+    // Avergae_shadow is used for area light approcimation
     Color avg_shadow;
+    // Initializing shadow values to 0
     avg_shadow[0] = 0;
     avg_shadow[1] = 0;
     avg_shadow[2] = 0;
 
-    //omp parallel for
+    // Optimization might be nullified by shared resources in the for loop
+    #pragma omp parallel for
     for (int j=0; j<=(2*light_size); j++){
       for (int k=0; k<=(2*light_size); k++){
 		
         LightSource* light = light_list[i];
           
-        //Create Shadow Ray
+        // Create Shadow Ray
         Ray3D shadow_ray;
-        //Origin is at intersection
+        // Origin is at intersection
         shadow_ray.origin = ray.intersection.point;
-        //Direction is towards light
+        // Direction is towards light
         Point3D light_origin(light->get_position());
+        // Vector from intersection to light source. Offset incrementally to approximate area light
         Vector3D light_dir(
           (light_origin[0] - ((light_size - j)/light_def)) - ray.intersection.point[0],
           (light_origin[1] - ((light_size - k)/light_def)) - ray.intersection.point[1],
@@ -68,37 +72,40 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list, Scene& scene) 
         );
         shadow_ray.dir = light_dir;
         shadow_ray.dir.normalize();
+        // Offsetting origin by epsilon to avoid accidental intersections
         shadow_ray.origin = ray.intersection.point + (epsilon * shadow_ray.dir);
 
         bool process_ray = true;
         
-        //Find shadow intersections
+        // Find shadow intersections
         traverseScene(scene, shadow_ray);
 
-        //Checking if ray met another object
+        // Checking if ray met another object
         if(!shadow_ray.intersection.none){
           double light_distance = (light_origin - shadow_ray.intersection.point).length();
           double intsc_distance = (shadow_ray.intersection.point - ray.intersection.point).length();
-          //Don't process_ray if it is being blocked by another object
-          //Need to check t_value to see which direction, wrt the light, the other object is in
+          // Don't process_ray if it is being blocked by another object
+          // Need to check t_value to see which direction, wrt the light, the other object is in
           if(intsc_distance < light_distance && shadow_ray.intersection.t_value >= 0){
             process_ray = false;
+            // Optional for different colors for shadow
             light->shade(ray, 1);
           }
+          // Optional for different colors for shadow
           light->shade(ray, 1);
         }
         
         if(process_ray){
-          //default lighting
+          // Default lighting
           light->shade(ray, 0);
         }
         avg_shadow = avg_shadow + ray.col; 
       }
     }
-
-    ray.col[0] = avg_shadow[0];///pow((light_size*2), 2.0);
-    ray.col[1] = avg_shadow[1];///pow((light_size*2), 2.0);
-    ray.col[2] = avg_shadow[2];///pow((light_size*2), 2.0);
+    // Calculating average shadow for area light approximation
+    ray.col[0] = avg_shadow[0]/pow((light_size*2), 2.0);
+    ray.col[1] = avg_shadow[1]/pow((light_size*2), 2.0);
+    ray.col[2] = avg_shadow[2]/pow((light_size*2), 2.0);
 	}
 }
 
@@ -118,13 +125,17 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list,
 			col = ray.col;  
   
 			if (depth>0){
+        // Constructing reflected ray
 			  Ray3D reflect_ray;
 			  reflect_ray.origin = ray.intersection.point;
+        // Reflecting ray from normal at intersection point
 			  reflect_ray.dir = ray.dir - 2*(ray.dir.dot(ray.intersection.normal))*ray.intersection.normal;
+        // Offsetting ray to avoid accidental collisions
 			  reflect_ray.origin = ray.intersection.point + (0.01 * reflect_ray.dir);
 			  reflect_ray.dir.normalize();
       
 			  depth = depth - 1;
+        // Adding color from reflected intersection to reflected ray
 			  col = col + shadeRay(reflect_ray, scene, light_list, depth, 
 			                       env_map_loaded, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer);
 			}
@@ -185,7 +196,7 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
 	// Divide pixel into nxn grid and fire a ray at a random location in each segment
 
 	// Construct a ray for each pixel.
-  #pragma omp parallel for
+  #pragma omp parallel for //optimization might be nullified by shared resources
   {
     for (int i = 0; i < image.height; i++) {
       for (int j = 0; j < image.width; j++) {
@@ -230,7 +241,7 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
         
 
             //Color col = shadeRay(ray, scene, light_list);
-            avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 4,
+            avg_color_for_pixel = avg_color_for_pixel + shadeRay(ray, scene, light_list, 2,
                                        !image_read_failed, widthBMP, heightBMP, rbuffer, gbuffer, bbuffer); // *****Env Mapping*****
             // Need to take average of colour from each ray
 
